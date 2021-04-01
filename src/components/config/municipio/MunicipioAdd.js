@@ -52,6 +52,8 @@ const useStyles = makeStyles((theme) => ({
       //console.log(body);
     }
 
+    console.log(comboprovincia);
+
     useEffect(() => {
       getProvincia();
     },[])

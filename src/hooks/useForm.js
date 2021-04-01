@@ -16,6 +16,7 @@ export const useForm = ( initialState = {} ) => {
             ...values,
             [ target.name ]: target.value
         });
+        console.log(target.value);
 
     }
 

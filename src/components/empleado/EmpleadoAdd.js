@@ -1,19 +1,35 @@
 import React, { useEffect, useState } from 'react';
+
+import clsx from 'clsx';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
+import Input from '@material-ui/core/Input';
+import InputLabel from '@material-ui/core/InputLabel';
+import FormControl from '@material-ui/core/FormControl';
+import ListItemText from '@material-ui/core/ListItemText';
+import Select from '@material-ui/core/Select';
+import Checkbox from '@material-ui/core/Checkbox';
+import Chip from '@material-ui/core/Chip';
+
 import PropTypes from 'prop-types';
-import { makeStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
-import { Avatar, Button, Checkbox, Container, CssBaseline, FormControlLabel, Grid, MenuItem, TextField } from '@material-ui/core';
+import { Avatar, Button, Container, CssBaseline, Grid, MenuItem, TextField } from '@material-ui/core';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import 'date-fns';
+import DateFnsUtils from '@date-io/date-fns';
+import {
+  MuiPickersUtilsProvider,
+  KeyboardTimePicker,
+  KeyboardDatePicker,
+} from '@material-ui/pickers';
 
 import { useForm } from '../../hooks/useForm';
 import { fetchConToken } from '../../helpers/fetch';
-import Swal from 'sweetalert2';
 import { useHistory } from 'react-router-dom';
-import { Label } from '@material-ui/icons';
+import Swal from 'sweetalert2';
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -70,17 +86,74 @@ const useStyles = makeStyles((theme) => ({
   submit: {
     margin: theme.spacing(3, 0, 2),
   },
+  formControl: {
+    margin: theme.spacing(1),
+    minWidth: 120,
+    maxWidth: 300,
+  },
+  chips: {
+    display: 'flex',
+    flexWrap: 'wrap',
+  },
+  chip: {
+    margin: 2,
+  },
+  noLabel: {
+    marginTop: theme.spacing(3),
+  },
 }));
+
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+    },
+  },
+};
+
+function getStyles(name, integracionrev, theme) {
+  return {
+    fontWeight:
+      integracionrev.indexOf(name) === -1
+        ? theme.typography.fontWeightRegular
+        : theme.typography.fontWeightMedium,
+  };
+}
 
 export const EmpleadoAdd = () => {
 
   const routerHistory = useHistory();
 
   const classes = useStyles();
+  const theme = useTheme();
+
   const [value, setValue] = React.useState(0);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  const [integracionrev, setIntegracion] = React.useState([]);
+
+  const handleChangeSelectMul = ({target}) => {
+    setIntegracion(target.value);
+    setformEmpleadoValues({
+      ...formEmpleadoValues,
+      integracion: target.value
+    });
+  };
+
+  const handleChangeMultiple = (event) => {
+    const { options } = event.target;
+    const value = [];
+    for (let i = 0, l = options.length; i < l; i += 1) {
+      if (options[i].selected) {
+        value.push(options[i].value);
+      }
+    }
+    setIntegracion(value);
   };
 
   //Para el Combo de Estado Civil
@@ -89,7 +162,12 @@ export const EmpleadoAdd = () => {
   const getEstadoCivil = async () => {
     const resp = await fetchConToken( 'estadocivil' );
     const body = await resp.json();
-    setComboestadocivil(body.estadocivil);
+    if(body.ok){
+      setComboestadocivil(body.estadocivil);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el Combo de Raza
@@ -98,7 +176,12 @@ export const EmpleadoAdd = () => {
   const getRaza = async () => {
     const resp = await fetchConToken( 'raza' );
     const body = await resp.json();
-    setComboraza(body.raza);
+    
+    if(body.ok){
+      setComboraza(body.raza);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
   }
 
   //Para el Combo de Sexo
@@ -123,25 +206,12 @@ export const EmpleadoAdd = () => {
   const getPais = async () => {
     const resp = await fetchConToken( 'pais' );
     const body = await resp.json();
-    setComboPais(body.pais);
-  }
-
-  //Para el combo provincias
-  const [comboprovincia, setComboprovincia] = useState([]);
-
-  const getProvincia = async () => {
-    const resp = await fetchConToken( 'provincia' );
-    const body = await resp.json();
-    setComboprovincia(body.provincia);
-  }
-
-  //Para el combo municipios
-  const [combomunicipio, setCombomunicipio] = useState([]);
-
-  const getmunicipio = async () => {
-    const resp = await fetchConToken( 'municipio' );
-    const body = await resp.json();
-    setCombomunicipio(body.municipio);
+    if(body.ok){
+      setComboPais(body.pais);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el combo NivelEducacional
@@ -150,7 +220,12 @@ export const EmpleadoAdd = () => {
   const getNivelEducacional = async () => {
     const resp = await fetchConToken( 'niveleducacional' );
     const body = await resp.json();
-    setComboniveleducacional(body.niveleducacional);
+    if(body.ok){
+      setComboniveleducacional(body.niveleducacional);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el combo Carrera
@@ -159,7 +234,12 @@ export const EmpleadoAdd = () => {
   const getCarrera = async () => {
     const resp = await fetchConToken( 'carrera' );
     const body = await resp.json();
-    setCombocarrera(body.carrera);
+    if(body.ok){
+      setCombocarrera(body.carrera);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el combo especialidad
@@ -168,7 +248,12 @@ export const EmpleadoAdd = () => {
   const getEspecialidad = async () => {
     const resp = await fetchConToken( 'especialidad' );
     const body = await resp.json();
-    setComboespecialidad(body.especialidad);
+    if(body.ok){
+      setComboespecialidad(body.especialidad);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el combo Grado Cientifico
@@ -177,7 +262,12 @@ export const EmpleadoAdd = () => {
   const getGradoCientifico = async () => {
     const resp = await fetchConToken( 'gradocientifico' );
     const body = await resp.json();
-    setCombogradocientifico(body.gradocientifico);
+    if(body.ok){
+      setCombogradocientifico(body.gradocientifico);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el Combo de las empresas
@@ -186,27 +276,14 @@ export const EmpleadoAdd = () => {
   const getEmpresa = async () => {
     const resp = await fetchConToken( 'empresa' );
     const body = await resp.json();
-    setComboEmpresa(body.empresa);
+    if(body.ok){
+      setComboEmpresa(body.empresa);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
     //setData(body.provincia);
     //console.log(body);
-  }
-
-  //Para el Combo de las unidad
-  const [combounidad, setCombounidad] = useState([]);
-
-  const getUnidad = async () => {
-    const resp = await fetchConToken( 'unidades' );
-    const body = await resp.json();
-    setCombounidad(body.unidades);
-  }
-
-  //Para el Combo de las area
-  const [comboarea, setComboarea] = useState([]);
-
-  const getArea = async () => {
-    const resp = await fetchConToken( 'area' );
-    const body = await resp.json();
-    setComboarea(body.area);
   }
 
   //Para el Combo de las cargo
@@ -215,7 +292,12 @@ export const EmpleadoAdd = () => {
   const getCargo = async () => {
     const resp = await fetchConToken( 'cargo' );
     const body = await resp.json();
-    setCombocargo(body.cargo);
+    if(body.ok){
+      setCombocargo(body.cargo);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el Combo de Tipo de Empleado
@@ -224,7 +306,12 @@ export const EmpleadoAdd = () => {
   const getTipoEmpleado = async () => {
     const resp = await fetchConToken( 'tipoempleado' );
     const body = await resp.json();
-    setCombotipoempleado(body.tipoempleado);
+    if(body.ok){
+      setCombotipoempleado(body.tipoempleado);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para el Combo de Defensa
@@ -233,11 +320,16 @@ export const EmpleadoAdd = () => {
   const getDefensa = async () => {
     const resp = await fetchConToken( 'defensa' );
     const body = await resp.json();
-    setCombodefensa(body.defensa);
+    if(body.ok){
+      setCombodefensa(body.defensa);
+      //console.log('bodyProvincias---->>>',body)
+      //setComboProvincia(body.provincia);
+    }
+    
   }
 
   //Para La Integracion
-  const [combointegracion, setCombointegracion] = useState([]);
+   const [combointegracion, setCombointegracion] = useState([]);
 
   const getIntegracion = async () => {
     const resp = await fetchConToken( 'integracion' );
@@ -246,27 +338,28 @@ export const EmpleadoAdd = () => {
     //console.log('integracion ',body.integracion );
   }
 
-    useEffect(()=>{
-      getEstadoCivil();
-      getRaza();
-      //getSexo();
-      getPais();
-      getProvincia();
-      getmunicipio();
-      getNivelEducacional();
-      getCarrera();
-      getEspecialidad();
-      getGradoCientifico();
-      getEmpresa();
-      getUnidad();
-      getArea();
-      getCargo();
-      getTipoEmpleado();
-      getDefensa();
-      getIntegracion();
-    },[])
+  useEffect(()=>{
+    getEstadoCivil();
+    getRaza();
+    //getSexo();
+    getPais();
+    //getProvincia();
+    //getmunicipio();
+    getNivelEducacional();
+    getCarrera();
+    getEspecialidad();
+    getGradoCientifico();
+    getEmpresa();
+    //getUnidad();
+    //getArea();
+    getCargo();
+    getTipoEmpleado();
+    getDefensa();
+    getIntegracion();
+  },[])
 
-    const [ formEmpleadoValues, handleInputChange ] = useForm({
+    //const [ formEmpleadoValues, handleInputChange ] = useForm({
+    const [ formEmpleadoValues, setformEmpleadoValues ] = useState({
       carne: '',
       nombre: '',
       apellidos: '',
@@ -291,7 +384,7 @@ export const EmpleadoAdd = () => {
       numempleado: '',
       fechacontrato: '',
       fechainicio: '',
-      integracion: [],
+      integracion: '',
       defensa: ''
     });
 
@@ -304,47 +397,139 @@ export const EmpleadoAdd = () => {
             defensa
     } = formEmpleadoValues;
 
-    console.log(pais);
-
-
-    const [checkintegracion, setCheckIntegracion] = useState([]);
-
-    const handleCheckChange = ({ target }) => {
-      if(target.checked){
-        setCheckIntegracion({
-          ...checkintegracion,
-          [ target.name ]: target.value
-        });
-
-      }
-      console.log(checkintegracion);
-      
+    const handleInputChange = ({target}) =>{
+      setformEmpleadoValues({
+        ...formEmpleadoValues,
+        [ target.name ]: target.value
+      });
+      //console.log(target.value);
     }
 
+    //Para el Combo de los provincia
+  const [comboprovincia, setComboProvincia] = useState([]);
 
+  const getProvincia = async (paisId) => {
+    const obj = {
+      pais: paisId
+    }
+    //console.log("pais++++++++", pais);
+    const resp = await fetchConToken( 'provincia/pais', obj, 'POST' );
+    const body = await resp.json();
+    
+    if(body.ok){
+      //console.log('bodyProvincias---->>>',body)
+      setComboProvincia(body.provincia);
+    }
+    
+  }
+
+  //Para el combo municipios
+  const [combomunicipio, setCombomunicipio] = useState([]);
+
+  const getmunicipio = async (provincia) => {    
+    const obj = {
+      provincia
+    }
+    //console.log("pais++++++++", pais);
+    const resp = await fetchConToken( 'municipio/provincia', obj, 'POST' );
+    const body = await resp.json();    
+    if(body.ok){
+      //console.log('bodyMunicipio---->>>',body);
+      setCombomunicipio(body.municipio);
+    }    
+  }
+
+  //Para el Combo de las unidad
+  const [combounidad, setCombounidad] = useState([]);
+
+  const getUnidad = async (empresa) => {
+    
+    const obj = {
+      empresa
+    }
+    //console.log("pais++++++++", pais);
+    const resp = await fetchConToken( 'unidades/empresa', obj, 'POST' );
+    const body = await resp.json();    
+    if(body.ok){
+      //console.log('bodyMunicipio---->>>',body);
+      setCombounidad(body.unidades);
+    }  
+    
+  }
+
+  //Para el Combo de las area
+  const [comboarea, setComboarea] = useState([]);
+
+  const getArea = async (unidad) => {
+    
+    const obj = {
+      unidad
+    }
+    //console.log("pais++++++++", pais);
+    const resp = await fetchConToken( 'area/unidad', obj, 'POST' );
+    const body = await resp.json();    
+    if(body.ok){
+      //console.log('bodyMunicipio---->>>',body);
+      setComboarea(body.area);
+    }  
+    
+  }
+
+  useEffect(()=>{
+    getProvincia(pais);
+  },[pais])
+
+  useEffect(()=>{
+    getmunicipio(provincia);
+  },[provincia])
+
+  useEffect(()=>{
+    getUnidad(empresa);
+  },[empresa])
+
+  useEffect(()=>{
+    getArea(unidad);
+  },[unidad])
+
+  const [selectedDate1, setSelectedDate1] = React.useState(new Date());
+  const [selectedDate2, setSelectedDate2] = React.useState(new Date());
+
+  const handleDateChange1 = (date) => {
+    setSelectedDate1(date);
+    setformEmpleadoValues({
+      ...formEmpleadoValues,
+      fechacontrato: date
+    });
+
+  };
+  const handleDateChange2 = (date) => {
+    setSelectedDate2(date);
+    setformEmpleadoValues({
+      ...formEmpleadoValues,
+      fechainicio: date
+    });
+  };
+   
+    
     const handleSubmit = async (e) => {
         e.preventDefault();
-        for(let i=0;i<checkintegracion.length;i++){
-          formEmpleadoValues.integracion.push(checkintegracion[i]);
-        }
         
-        formEmpleadoValues.integracion.push(checkintegracion);
         //setCheckIntegracion();
-        // try {
+        try {
 
-        //   const resp = await fetchConToken( 'empleado', formEmpleadoValues, 'POST' );
-        //   //console.log(resp);
-        //   if(!resp.ok){
-        //     Swal.fire('Error', resp.msg, 'error');
-        //     //console.log(resp);
-        //   }else{
-        //     Swal.fire('Exito', 'Empleado Agregada Satisfactoriamente', 'success');
-        //     routerHistory.push('/empleado'); 
-        //   }
+          const resp = await fetchConToken( 'empleado', formEmpleadoValues, 'POST' );
+          console.log(resp);
+          if(!resp.ok){
+            Swal.fire('Error', resp.msg, 'error');
+            //console.log(resp);
+          }else{
+            Swal.fire('Exito', 'Empleado Agregada Satisfactoriamente', 'success');
+            routerHistory.push('/empleado'); 
+          }
           
-        // } catch (error) {
-        //   Swal.fire(error);
-        // }
+        } catch (error) {
+          Swal.fire(error);
+        }
         console.log('empleado ', formEmpleadoValues)
         
     }
@@ -542,6 +727,7 @@ export const EmpleadoAdd = () => {
                       value={provincia}
                       onChange={handleInputChange}
                     >
+
                       {
                         comboprovincia.map((option)=> (
                           <MenuItem key={option._id} value={option._id}>
@@ -824,7 +1010,7 @@ export const EmpleadoAdd = () => {
                       }
                     </TextField>
                   </Grid>
-                  <Grid item xs={3}>
+                  <Grid item xs={4}>
                     <TextField
                       variant="outlined"
                       required
@@ -837,33 +1023,35 @@ export const EmpleadoAdd = () => {
                       onChange={handleInputChange}
                     />
                   </Grid>
-                  <Grid item xs={3}>
-                    <TextField
-                      variant="outlined"
-                      required
-                      fullWidth
-                      id="fechacontrato"
-                      label="Fecha de Contrato"
-                      name="fechacontrato"
-                      autoComplete="off"
-                      value={fechacontrato}
-                      onChange={handleInputChange}
-                    />
+                  <Grid item xs={4}>
+                    <FormControl className={classes.formControl}>
+                      <InputLabel id="demo-mutiple-chip-label">Integracion</InputLabel>
+                      <Select
+                        labelId="demo-mutiple-chip-label"
+                        id="demo-mutiple-chip"
+                        multiple
+                        name="integracion"
+                        value={integracionrev}
+                        onChange={handleChangeSelectMul}
+                        input={<Input id="select-multiple-chip" />}
+                        renderValue={(selected) => (
+                          <div className={classes.chips}>
+                            {selected.map((value) => (
+                              <Chip key={value} label={value} className={classes.chip} />
+                            ))}
+                          </div>
+                        )}
+                        MenuProps={MenuProps}
+                      >
+                        {combointegracion.map((name) => (
+                          <MenuItem key={name.integracion} value={name.integracion} style={getStyles(name.integracion, integracionrev, theme)}>
+                            {name.integracion}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
                   </Grid>
-                  <Grid item xs={3}>
-                    <TextField
-                      variant="outlined"
-                      required
-                      fullWidth
-                      id="fechainicio"
-                      label="Fecha de Comienzo Laboral"
-                      name="fechainicio"
-                      autoComplete="off"
-                      value={fechainicio}
-                      onChange={handleInputChange}
-                    />
-                  </Grid>
-                  <Grid item xs={3}>
+                  <Grid item xs={4}>
                     <TextField
                       variant="outlined"
                       select
@@ -884,29 +1072,39 @@ export const EmpleadoAdd = () => {
                       }
                     </TextField>
                   </Grid>
-                  <Grid item xs={12}>
-                  <Typography >
-                    Integracion
-                  </Typography>
-                  </Grid>                   
-                  {
-                    combointegracion.map((option)=> (
-                      <Grid item xs={3}> 
-                        <FormControlLabel
-                          control={
-                            <Checkbox 
-                              key={option._id} 
-                              value={option._id} 
-                              color="primary" 
-                              onChange={handleCheckChange} 
-                              name={option.integracion}
-                            />
-                          }
-                          label={option.integracion}
-                        />                      
-                      </Grid>
-                    ))
-                  }
+                  <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                    <Grid container justify="space-around">
+                      <KeyboardDatePicker
+                        margin="normal"
+                        variant='outlined'
+                        id="date-picker-dialog"
+                        label="Fecha de Contrato"
+                        format="dd/MM/yyyy"
+                        name={fechacontrato}
+                        value={selectedDate1}
+                        onChange={handleDateChange1}
+                        KeyboardButtonProps={{
+                          'aria-label': 'change date',
+                        }}
+                      />
+                      <KeyboardDatePicker
+                        margin="normal"
+                        variant='outlined'
+                        id="date-picker-dialog"
+                        label="Comienzo Laboral"
+                        format="dd/MM/yyyy"
+                        name={fechainicio}
+                        value={selectedDate2}
+                        onChange={handleDateChange2}
+                        KeyboardButtonProps={{
+                          'aria-label': 'change date',
+                        }}
+                      />
+
+                    </Grid>
+                  </MuiPickersUtilsProvider>
+
+                  
                     
                   
                 </Grid>
